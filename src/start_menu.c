@@ -60,6 +60,7 @@ enum
     MENU_ACTION_POKENAV,
     MENU_ACTION_PLAYER,
     MENU_ACTION_SAVE,
+    MENU_ACTION_ACCESS_PC,
     MENU_ACTION_OPTION,
     MENU_ACTION_EXIT,
     MENU_ACTION_RETIRE_SAFARI,
@@ -103,6 +104,7 @@ static bool8 StartMenuBagCallback(void);
 static bool8 StartMenuPokeNavCallback(void);
 static bool8 StartMenuPlayerNameCallback(void);
 static bool8 StartMenuSaveCallback(void);
+static bool8 StartMenuAccessPcCallback(void);
 static bool8 StartMenuOptionCallback(void);
 static bool8 StartMenuExitCallback(void);
 static bool8 StartMenuSafariZoneRetireCallback(void);
@@ -188,6 +190,7 @@ static const struct WindowTemplate sWindowTemplate_PyramidPeak = {
 };
 
 static const u8 sText_MenuDebug[] = _("DEBUG");
+static const u8 sText_AccessPC[]  = _("PC");
 
 static const struct MenuAction sStartMenuItems[] =
 {
@@ -197,6 +200,7 @@ static const struct MenuAction sStartMenuItems[] =
     [MENU_ACTION_POKENAV]         = {gText_MenuPokenav, {.u8_void = StartMenuPokeNavCallback}},
     [MENU_ACTION_PLAYER]          = {gText_MenuPlayer,  {.u8_void = StartMenuPlayerNameCallback}},
     [MENU_ACTION_SAVE]            = {gText_MenuSave,    {.u8_void = StartMenuSaveCallback}},
+    [MENU_ACTION_ACCESS_PC]       = {sText_AccessPC,  	{.u8_void = StartMenuAccessPcCallback}},
     [MENU_ACTION_OPTION]          = {gText_MenuOption,  {.u8_void = StartMenuOptionCallback}},
     [MENU_ACTION_EXIT]            = {gText_MenuExit,    {.u8_void = StartMenuExitCallback}},
     [MENU_ACTION_RETIRE_SAFARI]   = {gText_MenuRetire,  {.u8_void = StartMenuSafariZoneRetireCallback}},
@@ -347,6 +351,7 @@ static void BuildNormalStartMenu(void)
 
     AddStartMenuAction(MENU_ACTION_PLAYER);
     AddStartMenuAction(MENU_ACTION_SAVE);
+    AddStartMenuAction(MENU_ACTION_ACCESS_PC);
     AddStartMenuAction(MENU_ACTION_OPTION);
     AddStartMenuAction(MENU_ACTION_EXIT);
 }
@@ -771,6 +776,17 @@ static bool8 StartMenuSaveCallback(void)
     gMenuCallback = SaveStartCallback; // Display save menu
 
     return FALSE;
+}
+
+static bool8 StartMenuAccessPcCallback(void)
+{
+    RemoveExtraStartMenuWindows();
+    HideStartMenu(); // Hide start menu
+    CleanupOverworldWindowsAndTilemaps();
+    LockPlayerFieldControls();
+    ScriptContext_SetupScript(EventScript_PC);
+    SetMainCallback2(CB2_ReturnToField);
+    return TRUE;
 }
 
 static bool8 StartMenuOptionCallback(void)
