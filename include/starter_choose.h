@@ -12,5 +12,6 @@ u16 GetStarterPokemon_Frlg(u16 chosenStarterId);
 u16 GetStarterPokemonVoid(void);
 u16 GetStarterPokemonVoid_Frlg(void);
 void CB2_ChooseStarter(void);
+void InitStarterMons(void);
 
 #endif // GUARD_STARTER_CHOOSE_H

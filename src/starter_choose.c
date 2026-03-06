@@ -23,6 +23,7 @@
 #include "window.h"
 #include "constants/songs.h"
 #include "constants/rgb.h"
+#include "randomizer_starters.h"
 
 #define STARTER_MON_COUNT   3
 
@@ -110,19 +111,9 @@ static const u8 sStarterLabelCoords[STARTER_MON_COUNT][2] =
     {8, 4},
 };
 
-static const u16 sStarterMon[STARTER_MON_COUNT] =
-{
-    SPECIES_TREECKO,
-    SPECIES_TORCHIC,
-    SPECIES_MUDKIP,
-};
+static u16 sStarterMon[STARTER_MON_COUNT];
 
-static const u16 sStarterMon_Frlg[STARTER_MON_COUNT] =
-{
-    SPECIES_BULBASAUR,
-    SPECIES_CHARMANDER,
-    SPECIES_SQUIRTLE,
-};
+static u16 sStarterMon_Frlg[STARTER_MON_COUNT];
 
 static const struct BgTemplate sBgTemplates[3] =
 {
@@ -352,16 +343,35 @@ static const struct SpriteTemplate sSpriteTemplate_StarterCircle =
 // .text
 u16 GetStarterPokemon(u16 chosenStarterId)
 {
-    if (chosenStarterId > STARTER_MON_COUNT)
+    if (chosenStarterId >= STARTER_MON_COUNT)
         chosenStarterId = 0;
-    return sStarterMon[chosenStarterId];
+
+    if (!gSaveBlock2Ptr->starterConfig.randomizerEnabled)
+    {
+        // Return vanilla starters directly without touching the cache
+        static const u16 sVanillaStarters[STARTER_MON_COUNT] = {
+            SPECIES_TREECKO, SPECIES_TORCHIC, SPECIES_MUDKIP
+        };
+        return sVanillaStarters[chosenStarterId];
+    }
+
+    return gSaveBlock2Ptr->cachedStarterMons[chosenStarterId];
 }
 
 u16 GetStarterPokemon_Frlg(u16 chosenStarterId)
 {
-    if (chosenStarterId > STARTER_MON_COUNT)
+    if (chosenStarterId >= STARTER_MON_COUNT)
         chosenStarterId = 0;
-    return sStarterMon_Frlg[chosenStarterId];
+
+    if (!gSaveBlock2Ptr->starterConfig.randomizerEnabled)
+    {
+        static const u16 sVanillaStarters_Frlg[STARTER_MON_COUNT] = {
+            SPECIES_BULBASAUR, SPECIES_CHARMANDER, SPECIES_SQUIRTLE
+        };
+        return sVanillaStarters_Frlg[chosenStarterId];
+    }
+
+    return gSaveBlock2Ptr->cachedStarterMons_FrLg[chosenStarterId];
 }
 
 u16 GetStarterPokemonVoid(void)
@@ -683,4 +693,47 @@ static void SpriteCB_StarterPokemon(struct Sprite *sprite)
         sprite->y -= 2;
     if (sprite->y < STARTER_PKMN_POS_Y)
         sprite->y += 2;
+}
+
+void InitStarterMons(void)
+{
+    u16 randomizedStarters[NUM_STARTER_SLOTS];
+    u16 randomizedStarters_FrLg[NUM_STARTER_SLOTS];
+
+    if (!gSaveBlock2Ptr->starterConfig.randomizerEnabled)
+        return; // Nothing to do — vanilla starters are used directly
+
+    if (RandomizeStartersFromSeed(gSaveBlock2Ptr->starterRandomizerSeed, randomizedStarters))
+    {
+        gSaveBlock2Ptr->cachedStarterMons[0] = randomizedStarters[0];
+        gSaveBlock2Ptr->cachedStarterMons[1] = randomizedStarters[1];
+        gSaveBlock2Ptr->cachedStarterMons[2] = randomizedStarters[2];
+    }
+    else
+    {
+        gSaveBlock2Ptr->cachedStarterMons[0] = SPECIES_TREECKO;
+        gSaveBlock2Ptr->cachedStarterMons[1] = SPECIES_TORCHIC;
+        gSaveBlock2Ptr->cachedStarterMons[2] = SPECIES_MUDKIP;
+    }
+
+    sStarterMon[0] = gSaveBlock2Ptr->cachedStarterMons[0];
+    sStarterMon[1] = gSaveBlock2Ptr->cachedStarterMons[1];
+    sStarterMon[2] = gSaveBlock2Ptr->cachedStarterMons[2];
+
+    if (RandomizeStartersFromSeed(gSaveBlock2Ptr->starterRandomizerSeed, randomizedStarters_FrLg))
+    {
+        gSaveBlock2Ptr->cachedStarterMons_FrLg[0] = randomizedStarters[0];
+        gSaveBlock2Ptr->cachedStarterMons_FrLg[1] = randomizedStarters[1];
+        gSaveBlock2Ptr->cachedStarterMons_FrLg[2] = randomizedStarters[2];
+    }
+    else
+    {
+        gSaveBlock2Ptr->cachedStarterMons_FrLg[0] = SPECIES_BULBASAUR;
+        gSaveBlock2Ptr->cachedStarterMons_FrLg[1] = SPECIES_CHARMANDER;
+        gSaveBlock2Ptr->cachedStarterMons_FrLg[2] = SPECIES_SQUIRTLE;
+    }
+
+    sStarterMon_Frlg[0] = gSaveBlock2Ptr->cachedStarterMons_FrLg[0];
+    sStarterMon_Frlg[1] = gSaveBlock2Ptr->cachedStarterMons_FrLg[1];
+    sStarterMon_Frlg[2] = gSaveBlock2Ptr->cachedStarterMons_FrLg[2];
 }

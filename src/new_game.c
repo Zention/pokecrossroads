@@ -50,6 +50,10 @@
 #include "constants/items.h"
 #include "difficulty.h"
 #include "follower_npc.h"
+#include "config/randomizer.h"
+#include "randomizer_starters.h"
+#include "starter_choose.h"
+#include "rtc.h"
 
 extern const u8 EventScript_ResetAllMapFlags[];
 extern const u8 EventScript_ResetAllMapFlagsFrlg[];
@@ -157,6 +161,48 @@ void ResetMenuAndMonGlobals(void)
     ResetPokeblockScrollPositions();
 }
 
+void InitRandomizerConfig(void)
+{
+    gSaveBlock2Ptr->starterConfig.randomizerEnabled = FALSE;
+    // If the player configured the randomizer before starting a new game,
+    // gStarterRandomizerConfig already has their choices — preserve them.
+    // Only apply defaults if the config looks uninitialized (poolMode is 0
+    // and all type filters are 0, which can't be a valid intentional config
+    // since TYPE_NORMAL is 0 and STARTER_POOL_ALL_POKEMON is also 0 — so
+    // check the seed instead as a more reliable "was this ever set" signal).
+    if (gSaveBlock2Ptr->starterRandomizerSeed == 0)
+    {
+        // Truly fresh — apply defaults
+        gStarterRandomizerConfig.randomizerEnabled = TRUE;
+        gStarterRandomizerConfig.poolMode = STARTER_POOL_REAL_STARTERS;
+        gStarterRandomizerConfig.typeFilter[0] = TYPE_GRASS;
+        gStarterRandomizerConfig.typeFilter[1] = TYPE_FIRE;
+        gStarterRandomizerConfig.typeFilter[2] = TYPE_WATER;
+        gStarterRandomizerConfig.includeLegendaries = FALSE;
+    }
+
+    // Always persist whatever config is current and re-roll the seed
+    gSaveBlock2Ptr->starterConfig = gStarterRandomizerConfig;
+    {
+        struct SiiRtcInfo rtc;
+        u32 seed;
+
+        RtcGetInfo(&rtc);
+
+        seed = Random32();
+        seed ^= (u32)rtc.second;
+        seed ^= (u32)rtc.minute << 8;
+        seed ^= (u32)rtc.hour << 14;
+        seed ^= (u32)rtc.day << 20;
+        seed ^= (u32)rtc.month << 26;
+
+        gSaveBlock2Ptr->starterRandomizerSeed = seed;
+    }
+
+    WarmRandomizerCache();
+    InitStarterMons();
+}
+
 void NewGameInitData(void)
 {
     u8 rivalName[PLAYER_NAME_LENGTH + 1];
@@ -224,6 +270,7 @@ void NewGameInitData(void)
     ResetItemFlags();
     ResetDexNav();
     ClearFollowerNPCData();
+    InitRandomizerConfig();
 }
 
 static void ResetMiniGamesRecords(void)
@@ -248,3 +295,4 @@ static void ResetDexNav(void)
 #endif
     gSaveBlock3Ptr->dexNavChain = 0;
 }
+
