@@ -343,35 +343,25 @@ static const struct SpriteTemplate sSpriteTemplate_StarterCircle =
 // .text
 u16 GetStarterPokemon(u16 chosenStarterId)
 {
-    if (chosenStarterId >= STARTER_MON_COUNT)
-        chosenStarterId = 0;
-
-    if (!gSaveBlock2Ptr->starterConfig.randomizerEnabled)
+    if (!gSaveBlock2Ptr->randomizerConfig.starterConfig.randomizerEnabled)
     {
-        // Return vanilla starters directly without touching the cache
-        static const u16 sVanillaStarters[STARTER_MON_COUNT] = {
-            SPECIES_TREECKO, SPECIES_TORCHIC, SPECIES_MUDKIP
-        };
-        return sVanillaStarters[chosenStarterId];
+        sStarterMon[0] = SPECIES_TREECKO;
+        sStarterMon[1] = SPECIES_TORCHIC;
+        sStarterMon[2] = SPECIES_MUDKIP;
     }
-
-    return gSaveBlock2Ptr->cachedStarterMons[chosenStarterId];
+    return sStarterMon[chosenStarterId];
 }
+
 
 u16 GetStarterPokemon_Frlg(u16 chosenStarterId)
 {
-    if (chosenStarterId >= STARTER_MON_COUNT)
-        chosenStarterId = 0;
-
-    if (!gSaveBlock2Ptr->starterConfig.randomizerEnabled)
+    if (!gSaveBlock2Ptr->randomizerConfig.starterConfig.randomizerEnabled)
     {
-        static const u16 sVanillaStarters_Frlg[STARTER_MON_COUNT] = {
-            SPECIES_BULBASAUR, SPECIES_CHARMANDER, SPECIES_SQUIRTLE
-        };
-        return sVanillaStarters_Frlg[chosenStarterId];
+        sStarterMon_Frlg[0] = SPECIES_BULBASAUR;
+        sStarterMon_Frlg[1] = SPECIES_CHARMANDER;
+        sStarterMon_Frlg[2] = SPECIES_SQUIRTLE;
     }
-
-    return gSaveBlock2Ptr->cachedStarterMons_FrLg[chosenStarterId];
+    return sStarterMon_Frlg[chosenStarterId];
 }
 
 u16 GetStarterPokemonVoid(void)
@@ -700,40 +690,32 @@ void InitStarterMons(void)
     u16 randomizedStarters[NUM_STARTER_SLOTS];
     u16 randomizedStarters_FrLg[NUM_STARTER_SLOTS];
 
-    if (!gSaveBlock2Ptr->starterConfig.randomizerEnabled)
-        return; // Nothing to do — vanilla starters are used directly
+    if (!gSaveBlock2Ptr->randomizerConfig.starterConfig.randomizerEnabled)
+        return;
 
-    if (RandomizeStartersFromSeed(gSaveBlock2Ptr->starterRandomizerSeed, randomizedStarters))
+    if (RandomizeStartersFromSeed(gSaveBlock2Ptr->randomizerConfig.starterConfig.seed, randomizedStarters))
     {
-        gSaveBlock2Ptr->cachedStarterMons[0] = randomizedStarters[0];
-        gSaveBlock2Ptr->cachedStarterMons[1] = randomizedStarters[1];
-        gSaveBlock2Ptr->cachedStarterMons[2] = randomizedStarters[2];
+        sStarterMon[0] = randomizedStarters[0];
+        sStarterMon[1] = randomizedStarters[1];
+        sStarterMon[2] = randomizedStarters[2];
     }
     else
     {
-        gSaveBlock2Ptr->cachedStarterMons[0] = SPECIES_TREECKO;
-        gSaveBlock2Ptr->cachedStarterMons[1] = SPECIES_TORCHIC;
-        gSaveBlock2Ptr->cachedStarterMons[2] = SPECIES_MUDKIP;
+        sStarterMon[0] = SPECIES_TREECKO;
+        sStarterMon[1] = SPECIES_TORCHIC;
+        sStarterMon[2] = SPECIES_MUDKIP;
     }
 
-    sStarterMon[0] = gSaveBlock2Ptr->cachedStarterMons[0];
-    sStarterMon[1] = gSaveBlock2Ptr->cachedStarterMons[1];
-    sStarterMon[2] = gSaveBlock2Ptr->cachedStarterMons[2];
-
-    if (RandomizeStartersFromSeed(gSaveBlock2Ptr->starterRandomizerSeed, randomizedStarters_FrLg))
+    if (RandomizeStartersFromSeed(gSaveBlock2Ptr->randomizerConfig.starterConfig.seed, randomizedStarters_FrLg))
     {
-        gSaveBlock2Ptr->cachedStarterMons_FrLg[0] = randomizedStarters[0];
-        gSaveBlock2Ptr->cachedStarterMons_FrLg[1] = randomizedStarters[1];
-        gSaveBlock2Ptr->cachedStarterMons_FrLg[2] = randomizedStarters[2];
+        sStarterMon_Frlg[0] = randomizedStarters_FrLg[0];
+        sStarterMon_Frlg[1] = randomizedStarters_FrLg[1];
+        sStarterMon_Frlg[2] = randomizedStarters_FrLg[2];
     }
     else
     {
-        gSaveBlock2Ptr->cachedStarterMons_FrLg[0] = SPECIES_BULBASAUR;
-        gSaveBlock2Ptr->cachedStarterMons_FrLg[1] = SPECIES_CHARMANDER;
-        gSaveBlock2Ptr->cachedStarterMons_FrLg[2] = SPECIES_SQUIRTLE;
+        sStarterMon_Frlg[0] = SPECIES_BULBASAUR;
+        sStarterMon_Frlg[1] = SPECIES_CHARMANDER;
+        sStarterMon_Frlg[2] = SPECIES_SQUIRTLE;
     }
-
-    sStarterMon_Frlg[0] = gSaveBlock2Ptr->cachedStarterMons_FrLg[0];
-    sStarterMon_Frlg[1] = gSaveBlock2Ptr->cachedStarterMons_FrLg[1];
-    sStarterMon_Frlg[2] = gSaveBlock2Ptr->cachedStarterMons_FrLg[2];
 }

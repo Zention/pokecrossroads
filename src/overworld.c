@@ -72,6 +72,8 @@
 #include "wild_encounter.h"
 #include "vs_seeker.h"
 #include "frontier_util.h"
+#include "randomizer_encounters.h"
+#include "randomizer.h"
 #include "constants/abilities.h"
 #include "constants/event_object_movement.h"
 #include "constants/event_objects.h"
@@ -670,6 +672,8 @@ static void LoadCurrentMapData(void)
     gSaveBlock1Ptr->mapLayoutId = gMapHeader.mapLayoutId;
     gMapHeader.mapLayout = GetMapLayout(gMapHeader.mapLayoutId);
     isFrlg = GetCurrentRegion() == REGION_KANTO;
+
+    RandomizeEncountersForCurrentMap();
 }
 
 static void LoadSaveblockMapHeader(void)
@@ -2072,6 +2076,7 @@ void CB2_ContinueSavedGame(void)
         ResetWinStreaks();
 
     LoadSaveblockMapHeader();
+    LoadRandomizerConfig();
     ClearDiveAndHoleWarps();
     trainerHillMapId = GetCurrentTrainerHillMapId();
     if (gMapHeader.mapLayoutId == LAYOUT_BATTLE_FRONTIER_BATTLE_PYRAMID_FLOOR)
@@ -2079,6 +2084,7 @@ void CB2_ContinueSavedGame(void)
     else if (trainerHillMapId != 0 && trainerHillMapId != TRAINER_HILL_ENTRANCE)
         LoadTrainerHillFloorObjectEventScripts();
     else
+        LoadSaveblockMapHeader();
         LoadSaveblockObjEventScripts();
 
     UnfreezeObjectEvents();

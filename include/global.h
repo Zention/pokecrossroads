@@ -620,10 +620,7 @@ struct SaveBlock2
 #endif //FREE_RECORD_MIXING_HALL_RECORDS
     /*0x624*/ u16 contestLinkResults[CONTEST_CATEGORIES_COUNT][CONTESTANT_COUNT];
     /*0x64C*/ struct BattleFrontier frontier;
-    struct StarterRandomizerConfig starterConfig;
-    u32 starterRandomizerSeed;
-    u16 cachedStarterMons[NUM_STARTER_SLOTS];
-    u16 cachedStarterMons_FrLg[NUM_STARTER_SLOTS];
+    struct RandomizerConfig randomizerConfig;
 }; // sizeof=0xF2C
 
 extern struct SaveBlock2 *gSaveBlock2Ptr;

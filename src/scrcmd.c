@@ -63,6 +63,8 @@
 #include "malloc.h"
 #include "battle.h"
 #include "constants/event_objects.h"
+#include "constants/field_move.h"
+#include "constants/items.h"
 #include "constants/map_types.h"
 
 typedef u16 (*SpecialFunc)(void);
@@ -2305,6 +2307,23 @@ bool8 ScrCmd_setmonmove(struct ScriptContext *ctx)
     return FALSE;
 }
 
+// Maps field moves to the HM key items that can substitute for a Pokemon knowing the move.
+static enum Item GetHMKeyItemForFieldMove(enum FieldMove fieldMove)
+{
+    switch (fieldMove)
+    {
+    case FIELD_MOVE_CUT:        return ITEM_HM_KEY_SHEARS;
+    case FIELD_MOVE_FLASH:      return ITEM_HM_KEY_FLASHLIGHT;
+    case FIELD_MOVE_ROCK_SMASH: return ITEM_HM_KEY_PICKAXE;
+    case FIELD_MOVE_STRENGTH:   return ITEM_HM_KEY_MOVING_GLOVES;
+    case FIELD_MOVE_SURF:       return ITEM_HM_KEY_SURFBOARD;
+    case FIELD_MOVE_FLY:        return ITEM_HM_KEY_BALLOONS;
+    case FIELD_MOVE_DIVE:       return ITEM_HM_KEY_DIVING_GEAR;
+    case FIELD_MOVE_WATERFALL:  return ITEM_HM_KEY_SURFBOARD;
+    default:                    return ITEM_NONE;
+    }
+}
+
 bool8 ScrCmd_checkfieldmove(struct ScriptContext *ctx)
 {
     enum FieldMove fieldMove = ScriptReadByte(ctx);
@@ -2328,6 +2347,18 @@ bool8 ScrCmd_checkfieldmove(struct ScriptContext *ctx)
             gSpecialVar_Result = i;
             gSpecialVar_0x8004 = species;
             break;
+        }
+    }
+
+    // If no party Pokemon knows the move, check for the corresponding HM key item.
+	// Use party slot 0 for the field animation so scripts can proceed normally.
+    if (gSpecialVar_Result == PARTY_SIZE)
+    {
+        enum Item keyItem = GetHMKeyItemForFieldMove(fieldMove);
+        if (keyItem != ITEM_NONE && CheckBagHasItem(keyItem, 1) && gPlayerPartyCount > 0)
+        {
+            gSpecialVar_Result = 0;
+            gSpecialVar_0x8004 = GetMonData(&gPlayerParty[0], MON_DATA_SPECIES);
         }
     }
 

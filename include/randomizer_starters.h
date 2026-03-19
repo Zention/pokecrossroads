@@ -3,8 +3,12 @@
 
 #include "config/randomizer.h"
 
-// Declaration only — defined once in randomizer_starters.c
-extern struct StarterRandomizerConfig gStarterRandomizerConfig;
+// Menu option IDs for the randomizer screen
+#define RAND_OPT_POOL_MODE      0
+#define RAND_OPT_TYPE_SLOT_1    1
+#define RAND_OPT_TYPE_SLOT_2    2
+#define RAND_OPT_TYPE_SLOT_3    3
+#define RAND_OPT_COUNT          4
 
 bool8 RandomizeStarters(u16 outStarters[NUM_STARTER_SLOTS]);
 bool8 RandomizeStartersFromSeed(u32 seed, u16 outStarters[NUM_STARTER_SLOTS]);

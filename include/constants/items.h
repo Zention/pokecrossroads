@@ -1051,6 +1051,15 @@ enum __attribute__((packed)) Item
     ITEM_TATSUGIRINITE = 872,
     ITEM_GLIMMORANITE = 873,
 
+    // HM Key Items
+	ITEM_HM_KEY_SURFBOARD = 874,    // Allows use of Surf and Waterfall
+	ITEM_HM_KEY_DIVING_GEAR = 875,  // Allows use of Dive
+	ITEM_HM_KEY_PICKAXE = 876,      // Allows use of Rock Smash
+	ITEM_HM_KEY_FLASHLIGHT = 877,   // Allows use of Flash
+	ITEM_HM_KEY_BALLOONS = 878,     // Allows use of Fly
+	ITEM_HM_KEY_SHEARS = 879,       // Allows use of Cut
+	ITEM_HM_KEY_MOVING_GLOVES = 880, // Allows use of Strength
+
     ITEMS_COUNT,
     ITEM_FIELD_ARROW = ITEMS_COUNT,
 };

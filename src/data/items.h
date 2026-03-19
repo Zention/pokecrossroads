@@ -15828,6 +15828,120 @@ const struct ItemInfo gItemsInfo[] =
         .iconPic = gItemIcon_PokeshiDoll,
         .iconPalette = gItemIconPalette_PokeshiDoll,
     },
+
+    // HM Key Items
+
+    [ITEM_HM_KEY_SURFBOARD] =
+    {
+        .name = ITEM_NAME("Surfboard"),
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "A board for riding\n"
+            "waves. Allows Surf\n"
+            "and Waterfall use."),
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_Surfboard,
+        .iconPic = gItemIcon_HM,
+        .iconPalette = gItemIconPalette_NormalTMHM,
+    },
+
+    [ITEM_HM_KEY_DIVING_GEAR] =
+    {
+        .name = ITEM_NAME("Diving Gear"),
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Deep-sea equipment\n"
+            "that allows the use\n"
+            "of Dive."),
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_DivingGear,
+        .iconPic = gItemIcon_HM,
+        .iconPalette = gItemIconPalette_NormalTMHM,
+    },
+
+    [ITEM_HM_KEY_PICKAXE] =
+    {
+        .name = ITEM_NAME("Pickaxe"),
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "A sturdy pickaxe\n"
+            "for breaking rocks\n"
+            "with Rock Smash."),
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_Pickaxe,
+        .iconPic = gItemIcon_HM,
+        .iconPalette = gItemIconPalette_NormalTMHM,
+    },
+
+    [ITEM_HM_KEY_FLASHLIGHT] =
+    {
+        .name = ITEM_NAME("Flashlight"),
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "A bright lantern\n"
+            "that lights up dark\n"
+            "caves with Flash."),
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_Flashlight,
+        .iconPic = gItemIcon_HM,
+        .iconPalette = gItemIconPalette_NormalTMHM,
+    },
+
+    [ITEM_HM_KEY_BALLOONS] =
+    {
+        .name = ITEM_NAME("Balloons"),
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Colorful balloons\n"
+            "that let you soar\n"
+            "and use Fly."),
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_Balloons,
+        .iconPic = gItemIcon_HM,
+        .iconPalette = gItemIconPalette_NormalTMHM,
+    },
+
+    [ITEM_HM_KEY_SHEARS] =
+    {
+        .name = ITEM_NAME("Shears"),
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Sharp garden shears\n"
+            "that can Cut trees\n"
+            "and tall grass."),
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_Shears,
+        .iconPic = gItemIcon_HM,
+        .iconPalette = gItemIconPalette_NormalTMHM,
+    },
+
+    [ITEM_HM_KEY_MOVING_GLOVES] =
+    {
+        .name = ITEM_NAME("Moving Gloves"),
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Heavy-duty gloves\n"
+            "that grant Strength\n"
+            "to move boulders."),
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_MovingGloves,
+        .iconPic = gItemIcon_HM,
+        .iconPalette = gItemIconPalette_NormalTMHM,
+    },
 };
 
 #undef ITEM_NAME

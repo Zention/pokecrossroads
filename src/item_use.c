@@ -42,8 +42,11 @@
 #include "task.h"
 #include "text.h"
 #include "vs_seeker.h"
+#include "field_control_avatar.h"
+#include "region_map.h"
 #include "constants/event_bg.h"
 #include "constants/event_objects.h"
+#include "constants/field_effects.h"
 #include "constants/item_effects.h"
 #include "constants/items.h"
 #include "constants/songs.h"
@@ -80,6 +83,13 @@ static void SetDistanceOfClosestHiddenItem(u8, s16, s16);
 static void CB2_OpenPokeblockFromBag(void);
 static void ItemUseOnFieldCB_Honey(u8 taskId);
 static bool32 IsValidLocationForVsSeeker(void);
+static void ItemUseOnFieldCB_Surfboard(u8);
+static void ItemUseOnFieldCB_DivingGear(u8);
+static void ItemUseOnFieldCB_Pickaxe(u8);
+static void ItemUseOnFieldCB_Flashlight(u8);
+static void ItemUseOnFieldCB_Balloons(u8);
+static void ItemUseOnFieldCB_Shears(u8);
+static void ItemUseOnFieldCB_MovingGloves(u8);
 
 static const u8 sText_CantDismountBike[] = _("You can't dismount your BIKE here.{PAUSE_UNTIL_PRESS}");
 static const u8 sText_ItemFinderNearby[] = _("Huh?\nThe ITEMFINDER's responding!\pThere's an item buried around here!{PAUSE_UNTIL_PRESS}");
@@ -1633,6 +1643,219 @@ void ItemUseOutOfBattle_TownMap(u8 taskId)
     else
     {
         gTasks[taskId].func = ItemUseOnFieldCB_TownMap;
+    }
+}
+
+// ============================================================
+// HM Key Item field-use functions
+// ============================================================
+
+// -- Surfboard (Surf + Waterfall) --
+
+static void ItemUseOnFieldCB_Surfboard(u8 taskId)
+{
+    // Use party slot 0 for the surf animation (shows first party Pokemon briefly).
+    gFieldEffectArguments[0] = 0;
+    FieldEffectStart(FLDEFF_USE_SURF);
+    DestroyTask(taskId);
+}
+
+void ItemUseOutOfBattle_Surfboard(u8 taskId)
+{
+    if (!CheckFollowerNPCFlag(FOLLOWER_NPC_FLAG_CAN_SURF))
+    {
+        DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].tUsingRegisteredKeyItem);
+        return;
+    }
+    if (!TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_SURFING) && IsPlayerFacingSurfableFishableWater() == TRUE)
+    {
+        sItemUseOnFieldCB = ItemUseOnFieldCB_Surfboard;
+        SetUpItemUseOnFieldCallback(taskId);
+    }
+    else
+    {
+        DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].tUsingRegisteredKeyItem);
+    }
+}
+
+// -- Diving Gear (Dive) --
+
+static void ItemUseOnFieldCB_DivingGear(u8 taskId)
+{
+    // Re-uses EventScript_UseDive or EventScript_UseDiveUnderwater.
+    // checkfieldmove in those scripts will return slot 0 (key item present).
+    if (gMapHeader.mapType == MAP_TYPE_UNDERWATER)
+        ScriptContext_SetupScript(EventScript_UseDiveUnderwater);
+    else
+        ScriptContext_SetupScript(EventScript_UseDive);
+    DestroyTask(taskId);
+}
+
+void ItemUseOutOfBattle_DivingGear(u8 taskId)
+{
+    if (!CheckFollowerNPCFlag(FOLLOWER_NPC_FLAG_CAN_DIVE))
+    {
+        DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].tUsingRegisteredKeyItem);
+        return;
+    }
+    if (TrySetDiveWarp() != 0 || gMapHeader.mapType == MAP_TYPE_UNDERWATER)
+    {
+        sItemUseOnFieldCB = ItemUseOnFieldCB_DivingGear;
+        SetUpItemUseOnFieldCallback(taskId);
+    }
+    else
+    {
+        DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].tUsingRegisteredKeyItem);
+    }
+}
+
+// -- Pickaxe (Rock Smash) --
+
+static void ItemUseOnFieldCB_Pickaxe(u8 taskId)
+{
+    s16 x, y;
+    u8 objectEventId;
+
+    GetXYCoordsOneStepInFrontOfPlayer(&x, &y);
+    objectEventId = GetObjectEventIdByPosition(x, y, PlayerGetElevation());
+    if (objectEventId < OBJECT_EVENTS_COUNT)
+        gSpecialVar_LastTalked = gObjectEvents[objectEventId].localId;
+    ScriptContext_SetupScript(EventScript_UseRockSmash);
+    DestroyTask(taskId);
+}
+
+void ItemUseOutOfBattle_Pickaxe(u8 taskId)
+{
+    if (CheckObjectGraphicsInFrontOfPlayer(OBJ_EVENT_GFX_BREAKABLE_ROCK) == TRUE)
+    {
+        sItemUseOnFieldCB = ItemUseOnFieldCB_Pickaxe;
+        SetUpItemUseOnFieldCallback(taskId);
+    }
+    else
+    {
+        DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].tUsingRegisteredKeyItem);
+    }
+}
+
+// -- Flashlight (Flash) --
+
+static void ItemUseOnFieldCB_Flashlight(u8 taskId)
+{
+    PlaySE(SE_M_REFLECT);
+    FlagSet(FLAG_SYS_USE_FLASH);
+    ScriptContext_SetupScript(EventScript_UseFlash);
+    DestroyTask(taskId);
+}
+
+void ItemUseOutOfBattle_Flashlight(u8 taskId)
+{
+    if (gMapHeader.cave == TRUE && !FlagGet(FLAG_SYS_USE_FLASH))
+    {
+        sItemUseOnFieldCB = ItemUseOnFieldCB_Flashlight;
+        SetUpItemUseOnFieldCallback(taskId);
+    }
+    else
+    {
+        DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].tUsingRegisteredKeyItem);
+    }
+}
+
+// -- Balloons (Fly) --
+
+static void ItemUseOnFieldCB_Balloons(u8 taskId)
+{
+    SetMainCallback2(CB2_OpenFlyMap);
+    DestroyTask(taskId);
+}
+
+void ItemUseOutOfBattle_Balloons(u8 taskId)
+{
+    if (!CheckFollowerNPCFlag(FOLLOWER_NPC_FLAG_CAN_LEAVE_ROUTE))
+    {
+        DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].tUsingRegisteredKeyItem);
+        return;
+    }
+    if (Overworld_MapTypeAllowsTeleportAndFly(gMapHeader.mapType) == TRUE)
+    {
+        sItemUseOnFieldCB = ItemUseOnFieldCB_Balloons;
+        SetUpItemUseOnFieldCallback(taskId);
+    }
+    else
+    {
+        DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].tUsingRegisteredKeyItem);
+    }
+}
+
+// -- Shears (Cut) --
+
+static void ItemUseOnFieldCB_Shears(u8 taskId)
+{
+    s16 x, y;
+    u8 objectEventId;
+
+    GetXYCoordsOneStepInFrontOfPlayer(&x, &y);
+    objectEventId = GetObjectEventIdByPosition(x, y, PlayerGetElevation());
+    if (objectEventId < OBJECT_EVENTS_COUNT)
+        gSpecialVar_LastTalked = gObjectEvents[objectEventId].localId;
+
+    if (CheckObjectGraphicsInFrontOfPlayer(OBJ_EVENT_GFX_CUTTABLE_TREE) == TRUE
+        || CheckObjectGraphicsInFrontOfPlayer(OBJ_EVENT_GFX_CUTTABLE_TREE_FRLG) == TRUE)
+        ScriptContext_SetupScript(EventScript_UseCut);
+    else
+        ScriptContext_SetupScript(EventScript_UseCutGrass);
+    DestroyTask(taskId);
+}
+
+void ItemUseOutOfBattle_Shears(u8 taskId)
+{
+    s16 x, y;
+    u8 tileBehavior;
+    bool8 canUse = FALSE;
+
+    if (CheckObjectGraphicsInFrontOfPlayer(OBJ_EVENT_GFX_CUTTABLE_TREE) == TRUE
+        || CheckObjectGraphicsInFrontOfPlayer(OBJ_EVENT_GFX_CUTTABLE_TREE_FRLG) == TRUE)
+    {
+        canUse = TRUE;
+    }
+    else
+    {
+        PlayerGetDestCoords(&x, &y);
+        tileBehavior = MapGridGetMetatileBehaviorAt(x, y);
+        if (MetatileBehavior_IsPokeGrass(tileBehavior) == TRUE
+            || MetatileBehavior_IsAshGrass(tileBehavior) == TRUE)
+            canUse = TRUE;
+    }
+
+    if (canUse)
+    {
+        sItemUseOnFieldCB = ItemUseOnFieldCB_Shears;
+        SetUpItemUseOnFieldCallback(taskId);
+    }
+    else
+    {
+        DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].tUsingRegisteredKeyItem);
+    }
+}
+
+// -- Moving Gloves (Strength) --
+
+static void ItemUseOnFieldCB_MovingGloves(u8 taskId)
+{
+    ScriptContext_SetupScript(EventScript_UseStrength);
+    DestroyTask(taskId);
+}
+
+void ItemUseOutOfBattle_MovingGloves(u8 taskId)
+{
+    if (CheckObjectGraphicsInFrontOfPlayer(OBJ_EVENT_GFX_PUSHABLE_BOULDER) == TRUE
+        || CheckObjectGraphicsInFrontOfPlayer(OBJ_EVENT_GFX_PUSHABLE_BOULDER_FRLG) == TRUE)
+    {
+        sItemUseOnFieldCB = ItemUseOnFieldCB_MovingGloves;
+        SetUpItemUseOnFieldCallback(taskId);
+    }
+    else
+    {
+        DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].tUsingRegisteredKeyItem);
     }
 }
 

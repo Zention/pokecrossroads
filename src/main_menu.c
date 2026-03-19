@@ -40,6 +40,7 @@
 #include "window.h"
 #include "mystery_gift_menu.h"
 #include "randomizer_menu.h"
+#include "randomizer.h"
 
 /*
  * Main menu state machine
@@ -632,6 +633,7 @@ static u32 InitMainMenu(bool8 returningFromOptionsMenu)
     SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_WIN0_ON | DISPCNT_OBJ_ON | DISPCNT_OBJ_1D_MAP);
     ShowBg(0);
     HideBg(1);
+    RestoreRandomizerConfig();
     CreateTask(Task_MainMenuCheckSaveFile, 0);
 
     return 0;

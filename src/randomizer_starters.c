@@ -4,6 +4,7 @@
 #include "constants/species.h"
 #include "config/randomizer.h"
 #include "randomizer_starters.h"
+#include "randomizer.h"
 
 static const u16 sRealStarterSpecies[] = {
     SPECIES_BULBASAUR,
@@ -70,120 +71,7 @@ static const u16 sExtendedStarterSpecies[] = {
 #define NUM_REAL_STARTERS ARRAY_COUNT(sRealStarterSpecies)
 #define NUM_EXTENDED_STARTERS ARRAY_COUNT(sExtendedStarterSpecies)
 
-struct StarterRandomizerConfig gStarterRandomizerConfig;
 
-// -------------------------------------------------------
-// Bitmask helpers
-// -------------------------------------------------------
-
-#define SPECIES_MASK_SIZE ((NUM_SPECIES / 8) + 1)
-
-// Marks species that are base evolutions (no pre-evolution exists).
-// Built once by scanning GetSpeciesEvolutions — O(n) build, O(1) lookup.
-// Avoids calling GetSpeciesPreEvolution which is itself O(n) per call.
-static EWRAM_DATA u8 sBaseEvolutionMask[SPECIES_MASK_SIZE];
-static EWRAM_DATA bool8 sBaseEvolutionMaskBuilt;
-
-// Marks species that are the canonical (first) entry for their natDexNum.
-// This filters out all form variants: regional forms, Mega evolutions,
-// Shadow forms, cosmetic forms (Mothim Sandy/Trash, Scatterbug patterns),
-// etc. — regardless of which flags they do or don't have set.
-// Built once O(n^2), then O(1) per lookup. Only runs once per power-on.
-static EWRAM_DATA u8 sValidSpeciesMask[SPECIES_MASK_SIZE];
-static EWRAM_DATA bool8 sValidSpeciesMaskBuilt;
-
-static void BuildBaseEvolutionMask(void)
-{
-    u16 i;
-    u8 j;
-    const struct Evolution *evos;
-    u16 target;
-
-    if (sBaseEvolutionMaskBuilt)
-        return;
-
-    // Start by marking every species as a base evolution
-    for (i = 0; i < SPECIES_MASK_SIZE; i++)
-        sBaseEvolutionMask[i] = 0xFF;
-
-    // Clear the bit for any species that is an evolution target
-    for (i = SPECIES_BULBASAUR; i < NUM_SPECIES; i++)
-    {
-        if (i == 1435)
-            continue;
-
-        evos = GetSpeciesEvolutions(i);
-        if (evos == NULL)
-            continue;
-        for (j = 0; evos[j].method != EVOLUTIONS_END; j++)
-        {
-            target = SanitizeSpeciesId(evos[j].targetSpecies);
-            if (target < NUM_SPECIES)
-                sBaseEvolutionMask[target / 8] &= ~(1 << (target % 8));
-        }
-    }
-
-    sBaseEvolutionMaskBuilt = TRUE;
-}
-
-static void BuildValidSpeciesMask(void)
-{
-    u16 species;
-    u16 earlier;
-    bool8 isDuplicate;
-    u16 dexNum;
-
-    if (sValidSpeciesMaskBuilt)
-        return;
-
-    for (species = 1; species < NUM_SPECIES; species++)
-    {
-        if (species == 1435)
-            continue;
-
-        if (gSpeciesInfo[species].baseHP == 0)
-            continue;
-
-        dexNum = gSpeciesInfo[species].natDexNum;
-
-        // Species with no dex number are non-standard entries — skip them
-        if (dexNum == NATIONAL_DEX_NONE)
-            continue;
-
-        // If an earlier valid species already has this dex number,
-        // this species is a form variant — skip it.
-        // Base forms always have lower species IDs than their variants.
-        isDuplicate = FALSE;
-        for (earlier = 1; earlier < species; earlier++)
-        {
-            if (gSpeciesInfo[earlier].baseHP > 0
-                && gSpeciesInfo[earlier].natDexNum == dexNum)
-            {
-                isDuplicate = TRUE;
-                break;
-            }
-        }
-
-        if (!isDuplicate)
-            sValidSpeciesMask[species / 8] |= (1 << (species % 8));
-    }
-
-    sValidSpeciesMaskBuilt = TRUE;
-}
-
-static bool8 IsBaseEvolution(u16 species)
-{
-    if (species >= NUM_SPECIES)
-        return FALSE;
-    return (sBaseEvolutionMask[species / 8] >> (species % 8)) & 1;
-}
-
-static bool8 IsValidStarterSpecies(u16 species)
-{
-    if (species >= NUM_SPECIES)
-        return FALSE;
-    return (sValidSpeciesMask[species / 8] >> (species % 8)) & 1;
-}
 
 // -------------------------------------------------------
 // Type / pool helpers
@@ -238,11 +126,11 @@ static u16 BuildCandidatePool(u8 typeFilter, u16 *outPool, u16 maxSize)
         // Skip form variants — only the canonical base form for each
         // national dex number is allowed. This filters Shadow Lugia,
         // regional forms, Mega evolutions, cosmetic variants, etc.
-        if (!IsValidStarterSpecies(species))
+        if (!IsValidSpecies(species))
             continue;
 
         // Skip legendaries if the config excludes them
-        if (!gStarterRandomizerConfig.includeLegendaries)
+        if (!gRandomizerConfig.starterConfig.includeLegendaries)
         {
             if (gSpeciesInfo[species].isRestrictedLegendary
                 || gSpeciesInfo[species].isSubLegendary
@@ -253,7 +141,7 @@ static u16 BuildCandidatePool(u8 typeFilter, u16 *outPool, u16 maxSize)
         }
 
         // Pool mode filter
-        switch (gStarterRandomizerConfig.poolMode)
+        switch (gRandomizerConfig.starterConfig.poolMode)
         {
         case STARTER_POOL_REAL_STARTERS:
             if (!IsRealStarter(species))
@@ -332,7 +220,7 @@ bool8 RandomizeStarters(u16 outStarters[NUM_STARTER_SLOTS])
 
     for (slot = 0; slot < NUM_STARTER_SLOTS; slot++)
     {
-        typeFilter = gStarterRandomizerConfig.typeFilter[slot];
+        typeFilter = gRandomizerConfig.starterConfig.typeFilter[slot];
         found = FALSE;
 
         poolSize = BuildCandidatePool(typeFilter, sCandidatePool, NUM_SPECIES);
