@@ -1819,7 +1819,7 @@ void ItemUseOutOfBattle_Shears(u8 taskId)
     }
     else
     {
-        PlayerGetDestCoords(&x, &y);
+        GetXYCoordsOneStepInFrontOfPlayer(&x, &y);
         tileBehavior = MapGridGetMetatileBehaviorAt(x, y);
         if (MetatileBehavior_IsPokeGrass(tileBehavior) == TRUE
             || MetatileBehavior_IsAshGrass(tileBehavior) == TRUE)
